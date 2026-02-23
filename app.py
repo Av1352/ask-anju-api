@@ -11,7 +11,7 @@ CORS(app)
 
 # Configure Gemini
 genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
-model = genai.GenerativeModel('gemini-pro')
+model = genai.GenerativeModel('gemini-3-flash-preview')
 
 # Load knowledge base
 with open('data/anju_knowledge.md', 'r', encoding='utf-8') as f:
