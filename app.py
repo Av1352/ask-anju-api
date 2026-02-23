@@ -3,72 +3,47 @@ load_dotenv()
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
+import google.generativeai as genai
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-# Simple AI without RAG/embeddings (lighter memory footprint)
-class AnjuAI:
-    def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-pro",
-            temperature=0.5
-        )
-        self.knowledge_base = self._load_knowledge_base()
-        self.prompt_template = self._create_prompt_template()
+# Configure Gemini
+genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+model = genai.GenerativeModel('gemini-pro')
+
+# Load knowledge base
+with open('data/anju_knowledge.md', 'r', encoding='utf-8') as f:
+    KNOWLEDGE_BASE = f.read()
+
+def ask_anju(question):
+    """Ask question using Gemini with knowledge base context"""
     
-    def _load_knowledge_base(self):
-        """Load full knowledge base"""
-        with open('data/anju_knowledge.md', 'r', encoding='utf-8') as f:
-            return f.read()
-    
-    def _create_prompt_template(self):
-        """Create prompt template"""
-        template = """You are answering questions on behalf of Anju Vilashni Nandhakumar.
+    prompt = f"""You are answering questions on behalf of Anju Vilashni Nandhakumar.
 
 CRITICAL: Always respond in FIRST PERSON as Anju speaking directly.
 Use "I built..." not "Anju built..."
 
-Tone:
-- Professional, conversational, direct
-- Confident about strengths, honest about growth areas
-- Calm confidence (not defensive or salesy)
-- Keep responses concise
+Tone: Professional, conversational, direct, calm confidence.
 
 Use this knowledge base to answer:
 
-{knowledge_base}
+{KNOWLEDGE_BASE}
 
 Question: {question}
 
-Answer (as Anju, first person, professional):"""
+Answer (as Anju, first person):"""
 
-        return PromptTemplate(
-            template=template,
-            input_variables=["knowledge_base", "question"]
-        )
-    
-    def ask(self, question):
-        """Get answer to question"""
-        try:
-            prompt = self.prompt_template.format(
-                knowledge_base=self.knowledge_base,
-                question=question
-            )
-            response = self.llm.invoke(prompt)
-            return response.content
-        except Exception as e:
-            return f"Error: {str(e)}"
-
-# Initialize AI
-anju_ai = AnjuAI()
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"Error: {str(e)}"
 
 @app.route('/api/ask', methods=['POST'])
 def ask():
-    """API endpoint for questions"""
+    """API endpoint"""
     try:
         data = request.get_json()
         question = data.get('question', '')
@@ -76,7 +51,7 @@ def ask():
         if not question:
             return jsonify({'error': 'No question provided'}), 400
         
-        answer = anju_ai.ask(question)
+        answer = ask_anju(question)
         
         return jsonify({
             'answer': answer,
@@ -91,7 +66,6 @@ def ask():
 
 @app.route('/api/health', methods=['GET'])
 def health():
-    """Health check endpoint"""
     return jsonify({'status': 'healthy'})
 
 if __name__ == '__main__':
