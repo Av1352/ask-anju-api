@@ -1,98 +1,69 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
-from langchain.chains import RetrievalQA
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
-from langchain_community.embeddings import HuggingFaceEmbeddings
 import os
 
-from dotenv import load_dotenv
-load_dotenv()  # Load environment variables from .env file
-
 app = Flask(__name__)
-CORS(app)  # Allow requests from your GoDaddy site
+CORS(app)
 
-# Initialize RAG system
+# Simple AI without RAG/embeddings (lighter memory footprint)
 class AnjuAI:
     def __init__(self):
-        # Use Gemini (FREE)
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
         self.llm = ChatGoogleGenerativeAI(
-        model="gemini-3-flash-preview",
-        temperature=0.5
-    )
-        self.vectorstore = self._create_vectorstore()
-        self.qa_chain = self._create_qa_chain()
+            model="gemini-pro",
+            temperature=0.5
+        )
+        self.knowledge_base = self._load_knowledge_base()
+        self.prompt_template = self._create_prompt_template()
     
     def _load_knowledge_base(self):
-        """Load knowledge base from data file"""
+        """Load full knowledge base"""
         with open('data/anju_knowledge.md', 'r', encoding='utf-8') as f:
             return f.read()
     
-    def _create_vectorstore(self):
-        """Create FAISS vectorstore"""
-        text = self._load_knowledge_base()
-        
-        splitter = RecursiveCharacterTextSplitter(
-            chunk_size=1000,
-            chunk_overlap=200
-        )
-        chunks = splitter.split_text(text)
-        
-        return FAISS.from_texts(chunks, self.embeddings)
-    
-    def _create_qa_chain(self):
-        """Create QA chain with professional prompt"""
-        template = """You are answering questions on behalf of Anju Vilashni Nandhakumar, 
-an ML Engineer specializing in healthcare AI and computer vision.
+    def _create_prompt_template(self):
+        """Create prompt template"""
+        template = """You are answering questions on behalf of Anju Vilashni Nandhakumar.
 
-CRITICAL: Always respond in FIRST PERSON as if you ARE Anju speaking directly.
-Use "I built..." not "Anju built..." or "She built..."
+CRITICAL: Always respond in FIRST PERSON as Anju speaking directly.
+Use "I built..." not "Anju built..."
 
-When answering:
-- Be professional but conversational and direct
-- Provide specific technical details and metrics
-- Keep responses concise (Anju's style)
-- Use actual achievements and numbers from the context
-- Link to portfolio (vxanju.com) or GitHub when appropriate
+Tone:
+- Professional, conversational, direct
+- Confident about strengths, honest about growth areas
+- Calm confidence (not defensive or salesy)
+- Keep responses concise
 
-For job search questions: Mention I'm actively evaluating opportunities. 
-Work authorization: F1 OPT through June 2026, then STEM OPT through 2028 
-(2+ years total, no sponsorship cost).
+Use this knowledge base to answer:
 
-If you don't have information: "I don't have those specific details. 
-Check out vxanju.com or email me at nandhakumar.anju@gmail.com"
-
-DO NOT make up information. Only use what's in the context. Speak AS Anju.
-
-Context: {context}
+{knowledge_base}
 
 Question: {question}
 
-Answer (first person, as Anju):"""
+Answer (as Anju, first person, professional):"""
 
-        prompt = PromptTemplate(
+        return PromptTemplate(
             template=template,
-            input_variables=["context", "question"]
-        )
-        
-        return RetrievalQA.from_chain_type(
-            llm=self.llm,
-            retriever=self.vectorstore.as_retriever(search_kwargs={"k": 3}),
-            chain_type_kwargs={"prompt": prompt}
+            input_variables=["knowledge_base", "question"]
         )
     
     def ask(self, question):
         """Get answer to question"""
         try:
-            result = self.qa_chain.invoke({"query": question})
-            return result["result"]
+            prompt = self.prompt_template.format(
+                knowledge_base=self.knowledge_base,
+                question=question
+            )
+            response = self.llm.invoke(prompt)
+            return response.content
         except Exception as e:
-            return f"Error: {e}"
+            return f"Error: {str(e)}"
 
-# Initialize AI (do this once at startup)
+# Initialize AI
 anju_ai = AnjuAI()
 
 @app.route('/api/ask', methods=['POST'])
