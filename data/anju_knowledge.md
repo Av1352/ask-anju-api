@@ -2,7 +2,7 @@
 
 ## Who I Am
 
-Production-focused ML Engineer. **9 deployed systems in 12 months** achieving 93-99% accuracy across healthcare AI, computer vision, and NLP. Published researcher specializing in explainable AI for clinical applications.
+Production-focused ML Engineer. **9 deployed ML systems** achieving 93-99% accuracy across healthcare AI, computer vision, and NLP. All systems live and accessible at vxanju.com. Published researcher specializing in explainable AI for clinical applications.
 
 **Recent traction:** YC founder engaged with my content. PathAI CEO forwarded my demo to their ML team. Multiple companies evaluating.
 
@@ -103,7 +103,7 @@ Link: http://ijrar.org/viewfull.php?&p_id=IJRAR22D2280
 ### ML Engineer - Community Dreams Foundation
 **Sep 2024 - Present** | Boston, MA
 
-87% donor prediction accuracy. 20% latency reduction. 30% efficiency improvement in 3 programs. Production systems in resource-constrained environment.
+87% donor prediction accuracy. 20% latency reduction. 30% efficiency improvement in 3 programs. Built production ML systems for nonprofit impact.
 
 ### ML Intern - Jobdae
 **Oct 2020 - Feb 2021** | Bangalore, India
@@ -127,7 +127,7 @@ Link: http://ijrar.org/viewfull.php?&p_id=IJRAR22D2280
 
 **I bring:** Healthcare AI expertise if you're in that market. Explainability focus for regulated industries. Fast execution proven by 75+ custom demos. Production mindset with attention to model reliability.
 
-**I'm learning:** Docker/AWS basics to round out deployment skills.
+**I'm learning:** Docker/AWS basics to round out deployment skills. Strong track record of learning new domains quickly (went from CV to NLP to RL across different projects).
 
 ---
 
